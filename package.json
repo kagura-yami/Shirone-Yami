@@ -1,18 +1,9 @@
 {
-  "name": "shirone",
+  "name": "shirone-blog-template",
   "type": "module",
   "version": "1.0.3",
   "description": "An expressive, anime-inspired blog theme built on Material 3 Expressive, Astro 7, and Svelte 5",
   "license": "MIT",
-  "author": "matsuzaka-yuki",
-  "homepage": "https://shirone.mysqil.com/",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/LyraVoid/Shirone.git"
-  },
-  "bugs": {
-    "url": "https://github.com/LyraVoid/Shirone/issues"
-  },
   "keywords": [
     "astro",
     "astro-theme",
@@ -59,7 +50,10 @@
     "lint": "biome check --write ./src",
     "preinstall": "npx only-allow pnpm",
     "test": "playwright test",
-    "perf:measure": "node scripts/perf/measure.mjs"
+    "perf:measure": "node scripts/perf/measure.mjs",
+    "demo": "node services/authoring/demo/start.mjs",
+    "test:backend": "node --test services/authoring/test/*.test.mjs",
+    "bootstrap": "pnpm install --frozen-lockfile && pnpm --dir services/authoring install --frozen-lockfile && node services/authoring/build-copy.mjs && node services/authoring/build-editor.mjs && node services/authoring/build-renderer.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
@@ -143,5 +137,6 @@
     "overrides": {
       "serialize-javascript": "7.0.5"
     }
-  }
+  },
+  "private": true
 }

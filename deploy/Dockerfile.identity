@@ -1,0 +1,4 @@
+FROM authelia/authelia@sha256:bd97cff4fcbf715b5ff1f9ae286afbe6033afce385302520b0368122d43a6f54
+# The upstream startup writes this legacy Docker healthcheck environment file.
+# Our read-only, non-root deployment uses its own HTTP healthcheck instead.
+RUN rm /app/.healthcheck.env

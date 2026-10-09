@@ -76,6 +76,8 @@ export type BannerConfig = {
 };
 
 export type SiteConfig = {
+	/** Build translated UI routes and show the visitor language selector. */
+	languageSwitcher?: boolean;
 	site: string;
 	base?: string;
 	title: string;

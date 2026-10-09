@@ -13,6 +13,7 @@ import { tr } from "./languages/tr.ts";
 import { vi } from "./languages/vi.ts";
 import { zh_CN } from "./languages/zh_CN.ts";
 import { zh_TW } from "./languages/zh_TW.ts";
+import { currentLocale, normalizeLocale } from "./locale.ts";
 
 export type Translation = {
 	[K in I18nKey]: string;
@@ -42,18 +43,24 @@ const map: { [key: string]: Translation } = {
 };
 
 export function getTranslation(lang: string): Translation {
-	return map[lang.toLowerCase()] || defaultTranslation;
+	return map[normalizeLocale(lang).replaceAll("-", "_")] || defaultTranslation;
+}
+
+export function getLocale(): string {
+	return siteConfig.languageSwitcher
+		? currentLocale(siteConfig.lang, siteConfig.base)
+		: normalizeLocale(siteConfig.lang);
 }
 
 export function i18n(key: I18nKey): string {
-	const lang = (siteConfig.lang || "en").toLowerCase();
+	const lang = getLocale();
 
 	// 1. 查找用户自定义 i18n 覆盖域（支持原大小写及小写匹配，如 zh_CN / zh_cn）
 	if (i18nConfig && typeof i18nConfig === "object") {
 		const langOverrides =
 			i18nConfig[lang] ??
 			Object.entries(i18nConfig).find(
-				([k]) => k.toLowerCase() === lang,
+				([k]) => normalizeLocale(k) === lang,
 			)?.[1];
 
 		if (langOverrides && typeof langOverrides === "object") {

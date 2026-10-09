@@ -17,6 +17,7 @@ import {
 	TRAILING_SLASH,
 	viteBuildShared,
 } from "../config/integrationsConfig.ts";
+import { locales, normalizeLocale } from "../i18n/locale.ts";
 import { shironesFallbackResolver } from "./fallback-resolver.ts";
 import { buildFontDeclarations } from "./fonts.ts";
 import {
@@ -165,6 +166,7 @@ export function shirones(options: ShironesOptions = {}): AstroIntegration {
 				command,
 				updateConfig,
 				injectRoute,
+				addMiddleware,
 				addWatchFile,
 				logger,
 			}) => {
@@ -231,6 +233,8 @@ export function shirones(options: ShironesOptions = {}): AstroIntegration {
 				);
 				const siteConfig = siteModule.siteConfig as {
 					site?: string;
+					lang?: string;
+					languageSwitcher?: boolean;
 					base?: string;
 				};
 
@@ -385,6 +389,26 @@ export function shirones(options: ShironesOptions = {}): AstroIntegration {
 				});
 
 				// ── 7. Inject the theme's routes ────────────────────────────────
+				if (siteConfig?.languageSwitcher && options.injectRoutes !== false) {
+					addMiddleware({
+						entrypoint: join(paths.packageSrc, "i18n/middleware.ts"),
+						order: "pre",
+					});
+					const pages = filterRoutes(
+						collectRoutes(join(paths.packageSrc, "pages")),
+						options.excludeRoutes,
+					).filter((route) => route.source.endsWith(".astro"));
+					for (const locale of locales) {
+						if (locale.code === normalizeLocale(siteConfig.lang ?? "en"))
+							continue;
+						for (const route of pages) {
+							injectRoute({
+								pattern: `/${locale.code}${route.pattern}`,
+								entrypoint: route.entrypoint,
+							});
+						}
+					}
+				}
 				if (!paths.isThemeRepo && options.injectRoutes !== false) {
 					const routes = filterRoutes(
 						collectRoutes(join(paths.packageSrc, "pages")),

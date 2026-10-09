@@ -43,94 +43,12 @@ export const fontConfig: FontConfig = withUserConfig("font", {
 	 * - `"custom"`: 启用自定义字体（加载下方 fontFamilies 中配置的字体）
 	 * - `"system"`: 纯系统字体模式（不打包任何自定义字体文件，完全依赖访客设备）
 	 */
-	mode: "custom",
+	mode: "system",
 
 	/**
 	 * 字体清单列表（按需配置 body、cjk、mono 角色）
 	 */
-	fontFamilies: [
-		// ---------------------------------------------------------------------
-		// 1. 正文字体（现代几何圆润西文字体 Outfit，与 M3E 大圆角及悠哉圆体绝配）
-		// ---------------------------------------------------------------------
-		{
-			id: "outfit-body",
-			family: "Outfit",
-			role: "body",
-			source: "fontsource",
-			variants: [
-				{
-					file: "@fontsource/outfit/400.css",
-					weight: 400,
-					style: "normal",
-				},
-				{
-					file: "@fontsource/outfit/500.css",
-					weight: 500,
-					style: "normal",
-				},
-				{
-					file: "@fontsource/outfit/700.css",
-					weight: 700,
-					style: "normal",
-				},
-			],
-			fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
-			display: "swap",
-			preload: false,
-		},
-
-		// ---------------------------------------------------------------------
-		// 2. 中文 / 日文 CJK 字体（悠哉圆体 Yozai Medium，全量简繁中日韩 100% 覆盖）
-		// ---------------------------------------------------------------------
-		{
-			id: "yozai-cjk",
-			family: "Yozai Medium",
-			role: "cjk",
-			source: "local",
-			variants: [
-				{
-					file: "src/assets/fonts/Yozai-Medium.ttf",
-					weight: 500,
-					style: "normal",
-				},
-			],
-			fallback: ["system-ui", "sans-serif"],
-			display: "swap",
-			preload: false,
-		},
-
-		// ---------------------------------------------------------------------
-		// 3. 代码等宽字体（渲染代码块与终端文本，对应 CSS 变量 --font-mono）
-		// ---------------------------------------------------------------------
-		{
-			id: "jetbrains-mono",
-			family: "JetBrains Mono",
-			role: "mono",
-			source: "fontsource",
-			variants: [
-				{
-					file: "@fontsource-variable/jetbrains-mono/index.css",
-					weight: "100 800",
-					style: "normal",
-				},
-				{
-					file: "@fontsource-variable/jetbrains-mono/wght-italic.css",
-					weight: "100 800",
-					style: "italic",
-				},
-			],
-			fallback: [
-				"ui-monospace",
-				"SFMono-Regular",
-				"Menlo",
-				"Monaco",
-				"Consolas",
-				"monospace",
-			],
-			display: "swap",
-			preload: false,
-		},
-	],
+	fontFamilies: [],
 
 	/**
 	 * 字体子集化配置（生产构建时自动从文章、i18n、配置及 Meting 歌曲中提取字符，生成极速精简版 .woff2）

@@ -3,6 +3,7 @@ import { Font } from "astro:assets";
 import Snackbar from "@components/atoms/overlay/Snackbar.svelte";
 import ConfigCarrier from "@components/system/ConfigCarrier.astro";
 import UmamiRuntime from "@components/system/UmamiRuntime.astro";
+import { getLocale } from "@i18n/translation";
 import { resolveAsset } from "@utils/asset-utils";
 import { pathsEqual, toAbsoluteUrl, url } from "@utils/url-utils";
 import {
@@ -102,9 +103,11 @@ const favicons: Favicon[] =
 	siteConfig.favicon.length > 0 ? siteConfig.favicon : defaultFavicons;
 
 if (!lang) {
-	lang = `${siteConfig.lang}`;
+	lang = getLocale();
 }
-const siteLang = lang.replace("_", "-");
+const siteLang = siteConfig.languageSwitcher
+	? getLocale()
+	: lang.replace("_", "-");
 const fontRoleStyle = createFontRoleStyle(resolvedFontOptions);
 const customFontsEnabled = resolvedFontOptions.mode === "custom";
 const hasBodyFont =
@@ -113,12 +116,16 @@ const hasCjkFont =
 	customFontsEnabled && Boolean(resolvedFontOptions.roles.cjk.family);
 const hasMonoFont =
 	customFontsEnabled && Boolean(resolvedFontOptions.roles.mono.family);
+const LanguageTransition = siteConfig.languageSwitcher
+	? (await import("../components/system/LanguageTransition.astro")).default
+	: null;
 ---
 
 <!DOCTYPE html>
 <html lang={siteLang} class="bg-[var(--page-bg)] transition text-[14px] md:text-[16px]">
 	<head>
 		<style is:inline>@layer properties, theme, base, components, utilities;</style>
+		{LanguageTransition && <LanguageTransition />}
 
 		<title>{pageTitle}</title>
 
@@ -146,6 +153,10 @@ const hasMonoFont =
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		{fontRoleStyle && <style is:inline set:html={fontRoleStyle}></style>}
+		<style is:inline>
+			/* Typography must be available before deferred development CSS. */
+			body { font-family: var(--font-body, ui-sans-serif), var(--font-cjk, system-ui), sans-serif; }
+		</style>
 		{textureEnabled && <style is:inline set:html={textureStyles}></style>}
 		{hasBodyFont && <Font cssVariable={resolvedFontOptions.roles.body.cssVariable as never} preload={resolvedFontOptions.roles.body.preload} />}
 		{hasCjkFont && <Font cssVariable={resolvedFontOptions.roles.cjk.cssVariable as never} preload={resolvedFontOptions.roles.cjk.preload} />}
@@ -163,6 +174,7 @@ const hasMonoFont =
 
 		<script is:inline define:vars={{DEFAULT_THEME, LIGHT_MODE, DARK_MODE, AUTO_MODE, BANNER_HEIGHT_EXTEND, configHue, lightTheme, darkTheme, defaultWallpaperMode, defaultTexturePreset, defaultTextureOpacity, textureEnabled}}>
 			const theme = localStorage.getItem('theme') || DEFAULT_THEME;
+			document.documentElement.dataset.initialColorMode = theme;
 			let isDark = false;
 			switch (theme) {
 				case LIGHT_MODE:
@@ -229,6 +241,20 @@ const hasMonoFont =
 		data-banner-has-desktop={String(hasDesktopBanner)}
 		data-banner-has-mobile={String(hasMobileBanner)}
 	>
+		<script is:inline>
+			// Establish banner state before the header can paint. The deferred
+			// banner runtime subsequently owns resize, preferences and Swup updates.
+			{
+				const body = document.body;
+				const desktop = window.matchMedia('(min-width: 1024px)').matches;
+				const visible = document.documentElement.dataset.wallpaperMode === 'banner'
+					&& (desktop ? body.dataset.bannerHasDesktop === 'true'
+						: body.dataset.currentPage === 'home' && body.dataset.bannerHasMobile === 'true');
+				body.dataset.bannerVisible = String(visible);
+				body.dataset.bannerLayout = visible ? 'banner' : 'compact';
+				body.dataset.bannerTopAppBar = String(visible);
+			}
+		</script>
 		<ConfigCarrier></ConfigCarrier>
 		{umamiOptions && <UmamiRuntime />}
 		{textureEnabled && (
@@ -361,6 +387,9 @@ function scrollFunction() {
 	const navbar = document.getElementById('navbar');
 	const bannerStage = document.getElementById('banner-wrapper');
 	const bannerBottom = bannerStage?.getBoundingClientRect().height ?? 0;
+	// A hidden/unmeasured stage is still initializing. Preserve the parser-time
+	// header state until BannerStage has applied its visibility and dimensions.
+	if (bannerVisible && bannerBottom === 0) return;
 	const overBanner = bannerVisible && scrollTop < Math.max(0, bannerBottom - 64);
 	document.body.dataset.bannerScrolled = String(!overBanner);
 	navbar?.classList.toggle('top-app-bar--transparent', overBanner);

@@ -1,0 +1,5 @@
+# Append this site block to the existing edge Caddyfile after backing it up.
+# Do not replace the other project's configuration.
+blog.example.com {
+    reverse_proxy 127.0.0.1:18432
+}

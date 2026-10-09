@@ -1,0 +1,12 @@
+# Install only after the owner account has been provisioned privately.
+auth.example.com {
+    @registration path /setup /api/signup /api/signup/*
+    respond @registration 404
+    header {
+        Cache-Control "no-store"
+        Referrer-Policy "no-referrer"
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+    }
+    reverse_proxy 127.0.0.1:18433
+}

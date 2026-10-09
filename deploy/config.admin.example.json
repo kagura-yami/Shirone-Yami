@@ -1,0 +1,13 @@
+{
+  "mode": "admin",
+  "origin": "https://manage.example.com",
+  "issuer": "https://auth.example.com",
+  "clientId": "blog-admin",
+  "clientSecret": "REPLACE_WITH_YOUR_OWN_SECRET",
+  "subject": "REPLACE_WITH_YOUR_ADMIN_SUBJECT",
+  "sessionSecret": "REPLACE_WITH_A_RANDOM_SESSION_SECRET",
+  "proxy": false,
+  "blogUrl": "https://blog.example.com",
+  "adminUrl": "https://manage.example.com",
+  "vaultUrl": "https://vault.example.com"
+}

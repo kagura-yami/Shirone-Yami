@@ -1,0 +1,10 @@
+[Unit]
+Description=Encrypted blog workspace backups
+After=docker.service
+[Service]
+Type=oneshot
+User=demo-owner
+Group=demo-owner
+ExecStart=/bin/bash /srv/blog/project/deploy/backup-workspace
+UMask=0077
+NoNewPrivileges=true

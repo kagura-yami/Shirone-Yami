@@ -1,11 +1,13 @@
 ---
+import IconButton from "@components/atoms/action/IconButton.svelte";
 /**
  * M3 Top App Bar — 全站顶栏（替代 Fuwari 卡片式 Navbar）。
  * fixed 全宽、surface 底色 + 底部细分隔线；左侧菜单按钮（开全端导航抽屉）、
  * 站点标题（回首页）、右侧搜索/显示设置/主题切换。
  * 菜单按钮点击派发 site-drawer:toggle 事件，由 SiteNavigationDrawer 监听开合。
  */
-import IconButton from "@components/atoms/action/IconButton.svelte";
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
 import { resolveNavBarLinks, resolvePageKey } from "@utils/nav-utils";
 import { url } from "@utils/url-utils";
 import { Icon } from "astro-icon/components";
@@ -14,6 +16,10 @@ import { navBarConfig } from "@/config/navBarConfig";
 import DisplaySettings from "./DisplaySettings.svelte";
 import LightDarkSwitch from "./LightDarkSwitch.svelte";
 import Search from "./Search.svelte";
+
+const LanguageSwitch = siteConfig.languageSwitcher
+	? (await import("./LanguageSwitch.astro")).default
+	: null;
 
 const className = Astro.props.class;
 const links = resolveNavBarLinks(navBarConfig.links);
@@ -31,6 +37,24 @@ function isActive(link: (typeof links)[number]): boolean {
 }
 ---
 
+<style is:inline>
+	[data-header-fallback] { display: inline-flex; width: 2.5rem; height: 2.5rem; flex-shrink: 0; align-items: center; justify-content: center; }
+	[data-header-fallback] svg { width: 1.25rem; height: 1.25rem; }
+	[data-header-fallback] .fallback-light, [data-header-fallback] .fallback-dark { display: none; }
+	html[data-initial-color-mode="light"] .fallback-auto, html[data-initial-color-mode="dark"] .fallback-auto { display: none; }
+	html[data-initial-color-mode="light"] .fallback-light, html[data-initial-color-mode="dark"] .fallback-dark { display: block; }
+	/* Critical first-paint chrome, including before Vite loads component CSS. */
+	#navbar.top-app-bar--transparent {
+		background: transparent;
+		box-shadow: none;
+		backdrop-filter: none;
+		color: white;
+		--on-surface: white;
+		--on-surface-variant: rgba(255, 255, 255, 0.9);
+		--primary: white;
+	}
+</style>
+
 <div
 	id="navbar"
 	class:list={[
@@ -38,18 +62,27 @@ function isActive(link: (typeof links)[number]): boolean {
 		className,
 	]}
 >
+	<script is:inline>
+		// Parser-time bootstrap avoids an opaque frame while modules hydrate.
+		{
+			const navbar = document.getElementById('navbar');
+			navbar.style.transition = 'none';
+			navbar.classList.toggle('top-app-bar--transparent', document.body.dataset.bannerVisible === 'true' && window.scrollY === 0);
+			window.addEventListener('load', () => requestAnimationFrame(() => requestAnimationFrame(() => navbar.style.removeProperty('transition'))), { once: true });
+		}
+	</script>
 	<div class="relative max-w-[var(--page-width)] mx-auto h-16 px-3 md:px-5 flex items-center gap-1">
-		<IconButton id="nav-drawer-switch" label="Menu" class="shrink-0 lg:!hidden">
+		<IconButton id="nav-drawer-switch" label={i18n(I18nKey.mainNavigation)} class="shrink-0 lg:!hidden">
 			<Icon name="material-symbols:menu-rounded" class="text-[1.25rem]"></Icon>
 		</IconButton>
 		<a
 			href={url("/")}
-			class="group flex h-10 items-center gap-2 px-2 text-[var(--on-surface)] transition whitespace-nowrap"
+			class="group flex h-10 min-w-0 items-center gap-2 px-2 text-[var(--on-surface)] transition whitespace-nowrap"
 		>
 			<span class="h-5 w-1 rounded-full bg-[var(--primary)] transition-all group-hover:h-7"></span>
-			<span class="text-lg font-bold group-hover:text-[var(--primary)]">{siteConfig.title}</span>
+			<span class="truncate text-lg font-bold group-hover:text-[var(--primary)]">{siteConfig.title}</span>
 		</a>
-		<nav class:list={["top-app-bar__nav hidden h-full items-center gap-1 lg:flex", siteConfig.topAppBar.contentAlign === "center" ? "lg:absolute lg:left-1/2 lg:-translate-x-1/2" : "ml-4"]} aria-label="Main navigation">
+		<nav class:list={["top-app-bar__nav hidden h-full w-max whitespace-nowrap items-center gap-1 lg:flex", siteConfig.topAppBar.contentAlign === "center" ? "lg:absolute lg:left-1/2 lg:-translate-x-1/2" : "ml-4"]} aria-label={i18n(I18nKey.mainNavigation)}>
 			{links.map((link) => {
 				const href = link.external ? link.url : hrefFor(link.url);
 				const active = isActive(link);
@@ -85,14 +118,25 @@ function isActive(link: (typeof links)[number]): boolean {
 			})}
 		</nav>
 		<div class="flex-1"></div>
-		<Search client:only="svelte"></Search>
+		<Search client:only="svelte">
+			<span slot="fallback" role="img" data-header-fallback="search" class="inline-flex h-10 w-10 shrink-0 items-center justify-center" aria-label={i18n(I18nKey.search)}>
+				<Icon name="material-symbols:search" class="text-[1.25rem]" />
+			</span>
+		</Search>
 		{!siteConfig.themeColor.fixed && (
-			<IconButton id="display-settings-switch" label="Display Settings" class="shrink-0">
+			<IconButton id="display-settings-switch" label={i18n(I18nKey.displaySettings)} class="shrink-0">
 				<Icon name="material-symbols:palette-outline" class="text-[1.25rem]"></Icon>
 			</IconButton>
 		)}
-		<LightDarkSwitch client:only="svelte"></LightDarkSwitch>
+		<LightDarkSwitch client:only="svelte">
+			<span slot="fallback" role="img" data-header-fallback="theme" class="inline-flex h-10 w-10 shrink-0 items-center justify-center" aria-label={i18n(I18nKey.colorMode)}>
+				<Icon name="material-symbols:radio-button-partial-outline" class="text-[1.25rem] fallback-auto" />
+				<Icon name="material-symbols:wb-sunny-outline-rounded" class="text-[1.25rem] fallback-light" />
+				<Icon name="material-symbols:dark-mode-outline-rounded" class="text-[1.25rem] fallback-dark" />
+			</span>
+		</LightDarkSwitch>
 		<DisplaySettings client:only="svelte" class="top-full right-4 max-w-[calc(100vw-2rem)] md:right-0"></DisplaySettings>
+		{LanguageSwitch && <LanguageSwitch />}
 	</div>
 </div>
 
@@ -242,16 +286,6 @@ document.addEventListener('swup:content:replace', bindSearchTriggers);
 		background: color-mix(in oklab, var(--surface-container) 95%, transparent);
 		box-shadow: var(--m3e-elevation-2);
 	}
-
-		.top-app-bar--transparent {
-			background: transparent;
-			box-shadow: none;
-			backdrop-filter: none;
-			color: white;
-			--on-surface: white;
-			--on-surface-variant: rgba(255, 255, 255, 0.9);
-			--primary: white;
-		}
 
 			:global(.top-app-bar--transparent .top-app-bar__search-shell--expanded) {
 				--on-surface: var(--mc-on-surface);

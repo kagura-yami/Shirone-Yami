@@ -1,0 +1,38 @@
+name: blog
+services:
+  web:
+    image: blog-static:1
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    user: "1002:1003"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    pids_limit: 100
+    ports:
+      - "127.0.0.1:18432:8080"
+    volumes:
+      - /srv/blog/releases:/releases:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    tmpfs:
+      - /config:uid=1002,gid=1003,mode=0700,size=8m
+      - /data:uid=1002,gid=1003,mode=0700,size=8m
+      - /tmp:uid=1002,gid=1003,mode=0700,size=8m
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks: [public_site]
+networks:
+  public_site:
+    driver: bridge

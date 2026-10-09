@@ -1,4 +1,5 @@
 import type { NavBarLink } from "@/types/navBarConfig";
+import { splitLocalePath } from "../i18n/locale.ts";
 
 export type ResolvedNavBarLink = Omit<NavBarLink, "children"> & {
 	children?: ResolvedNavBarLink[];
@@ -75,6 +76,7 @@ export function resolvePageKey(
 		pathname = pathname.replace(/\/+$/, "") || "/";
 	}
 
+	pathname = splitLocalePath(pathname).path;
 	if (pathname === "/") return "home";
 	if (url.searchParams.has("category")) return "categories";
 	if (url.searchParams.has("tag")) return "tags";

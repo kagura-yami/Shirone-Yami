@@ -72,3 +72,19 @@ artifacts/lighthouse/*
 
 # generated AI skills plugin packages
 artifacts/shirone-ai-*
+
+# Private runtime and generated workspace assets
+.env.*
+!.env.example
+.demo/
+*.sqlite*
+*.db
+*.key
+*.pem
+*.log
+services/authoring/generated/
+services/authoring/public/preview-fonts/
+services/authoring/public/copy.json
+services/authoring/public/editor.bundle.mjs
+services/authoring/public/syntaxes.json
+services/authoring/public/theme-style.mjs

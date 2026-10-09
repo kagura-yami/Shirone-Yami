@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# Trusted source plus separately validated, approved CMS content snapshots.
+set -Eeuo pipefail
+umask 022
+ROOT=/srv/blog
+PROJECT=$ROOT/project
+RELEASES=$ROOT/releases
+COMPOSE=(docker compose -p blog -f "$PROJECT/deploy/compose.yaml")
+
+die() { printf '%s\n' "$*" >&2; exit 1; }
+valid_release() {
+    [[ "$1" =~ ^[0-9]{8}T[0-9]{6}Z(-[a-z0-9]+)?$ ]] || die 'Invalid release ID'
+    [[ -d "$RELEASES/$1" && ! -L "$RELEASES/$1" && -s "$RELEASES/$1/index.html" ]] || die 'Release is missing index.html'
+    [[ -z "$(find "$RELEASES/$1" -type l -print -quit)" ]] || die 'Release must not contain symlinks'
+    [[ -z "$(find "$RELEASES/$1" \( -name '.env*' -o -name '.git' -o -name '*.pem' -o -name '*.key' \) -print -quit)" ]] || die 'Release contains a forbidden file'
+}
+point_to() {
+    ln -s "$1" "$RELEASES/.next-$$"
+    mv -Tf "$RELEASES/.next-$$" "$RELEASES/current"
+}
+activate() {
+    local release=$1 previous
+    valid_release "$release"
+    previous=$(readlink "$RELEASES/current" || true)
+    point_to "$release"
+    if ! "${COMPOSE[@]}" up -d --no-build --wait --wait-timeout 60 || ! curl --fail --silent --output /dev/null --connect-timeout 3 --max-time 10 --retry 5 --retry-delay 2 --retry-connrefused http://127.0.0.1:18432/; then
+        if [[ -n "$previous" ]]; then
+            point_to "$previous"
+            "${COMPOSE[@]}" up -d
+        else
+            rm -f "$RELEASES/current"
+            "${COMPOSE[@]}" stop web
+        fi
+        die 'Activation failed; previous release restored if present'
+    fi
+    printf 'Active release: %s\n' "$release"
+}
+
+case "${1:-help}" in
+    status) "${COMPOSE[@]}" ps; readlink "$RELEASES/current" || true; exit ;;
+    logs) "${COMPOSE[@]}" logs --tail 100 web; exit ;;
+    help) printf '%s\n' 'Usage: bash deploy/blogctl {publish|activate ID|rollback ID|start|stop|status|logs}'; exit ;;
+esac
+exec 9>"$ROOT/.publish.lock"
+flock -n 9 || die 'Another release operation is running'
+case "$1" in
+    start) "${COMPOSE[@]}" up -d --wait ;;
+    stop) "${COMPOSE[@]}" stop web ;;
+    activate|rollback) [[ $# == 2 ]] || die 'Provide a release ID'; activate "$2" ;;
+    publish)
+        release=$(date -u +%Y%m%dT%H%M%SZ)
+        buildContainer="blog-build-$release"
+        trap 'docker rm -f "$buildContainer" >/dev/null 2>&1 || true' EXIT
+        work="$ROOT/builds/$release"
+        [[ ! -e "$work" && ! -e "$RELEASES/$release" ]] || die 'Release ID collision; retry later'
+        mkdir -p "$work/source"
+        # Snapshot source so a subsequent editor save cannot change this build.
+        tar -C "$PROJECT" --exclude='./node_modules' --exclude='./.git' --exclude='./dist' \
+            --exclude='./.astro' --exclude='./.shirones' --exclude='./.content-src' --exclude='./.content-backup' \
+            --exclude='./research' --exclude='./artifacts' --exclude='./services' --exclude='./.idea' --exclude='./test-results' \
+            --exclude='./playwright-report' --exclude='*.log' --exclude='.env' --exclude='.env.*' \
+            -cf - . | tar -C "$work/source" -xf -
+        mkdir -p "$ROOT/published"
+        manifest=${BLOG_CMS_MANIFEST:-"$ROOT/published/$(readlink "$RELEASES/current" || true).json"}
+        if [[ -f "$manifest" ]]; then
+            case "$manifest" in "$ROOT/publishing/"*.json|"$ROOT/published/"*.json) ;; *) die 'Invalid CMS manifest path' ;; esac
+            [[ ! -L "$manifest" ]] || die 'Manifest must not be a symlink'
+            docker run --rm --network none --user "$(id -u):$(id -g)" --cap-drop ALL \
+                --security-opt no-new-privileges:true --read-only --memory 192m --pids-limit 64 \
+                -v "$manifest:/manifest.json:ro" -v "$work/source/src/content:/content" \
+                -v "$ROOT/data/admin/media:/media:ro" -v "$work/source/public:/site-public" \
+                blog-authoring:1 node export.mjs /manifest.json /content /media /site-public
+        fi
+        docker build -t blog-builder:node24-pnpm9 -f "$PROJECT/deploy/Dockerfile.builder" "$PROJECT/deploy"
+        # Only reusable build artifacts are shared. Content data stores remain fresh.
+        dependencyKey=$(cat "$PROJECT/pnpm-lock.yaml" "$PROJECT/package.json" "$PROJECT/deploy/Dockerfile.builder" | sha256sum | cut -d' ' -f1)
+        cache="$ROOT/cache/$dependencyKey"
+        mkdir -p "$cache/node_modules" "$cache/store" "$cache/fonts" "$cache/thumbnails"
+        chmod 700 "$ROOT/cache" "$cache"
+        # No SSH key, production secret, Docker socket or diary volume is mounted.
+        if ! docker run --rm --name "$buildContainer" --init --user "$(id -u):$(id -g)" \
+            --cap-drop ALL --security-opt no-new-privileges:true --pids-limit 256 \
+            --memory 2g --memory-swap 4g --cpus 1 --read-only --tmpfs /tmp:rw,size=256m \
+            -e NODE_OPTIONS=--max-old-space-size=1536 \
+            -v "$work/source:/workspace" \
+            -v "$cache/node_modules:/workspace/node_modules" -v "$cache/store:/pnpm-store" \
+            -v "$cache/fonts:/workspace/src/assets/fonts/.subset" \
+            -v "$cache/thumbnails:/workspace/public/assets/moments/thumbnails" \
+            blog-builder:node24-pnpm9 sh deploy/build-cached.sh \
+            2>&1 | tee "$work/build.log"; then
+            die "Build failed; live site unchanged. Log: $work/build.log"
+        fi
+        mv "$work/source/dist" "$RELEASES/$release"
+        [[ ! -f "$manifest" ]] || cp "$manifest" "$ROOT/published/$release.json"
+        activate "$release"
+        # Exact, locally generated path; failed builds remain available for diagnosis.
+        rm -rf -- "$work/source"
+        ;;
+    *) die 'Unknown command; use help' ;;
+esac

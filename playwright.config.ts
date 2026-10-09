@@ -17,21 +17,24 @@ export default defineConfig({
 	retries: 0,
 	reporter: [["list"]],
 	use: {
-		baseURL: "http://localhost:4321",
+		baseURL: process.env.SHIRONE_TEST_URL ?? "http://localhost:4321",
 		channel: "chrome",
 		viewport: { width: 1280, height: 900 },
 		trace: "retain-on-failure",
 	},
-	webServer: {
-		command:
-			process.platform === "win32"
-				? "pnpm.cmd astro dev --port 4321 --host"
-				: "pnpm astro dev --port 4321 --host",
-		url: "http://localhost:4321",
-		reuseExistingServer: true,
-		timeout: 120_000,
-		env: {
-			ASTRO_DEV_BACKGROUND: "false",
-		},
-	},
+	// SHIRONE_TEST_URL targets an already-running, isolated dev/preview server.
+	webServer: process.env.SHIRONE_TEST_URL
+		? undefined
+		: {
+				command:
+					process.platform === "win32"
+						? "pnpm.cmd astro dev --port 4321 --host"
+						: "pnpm astro dev --port 4321 --host",
+				url: "http://localhost:4321",
+				reuseExistingServer: true,
+				timeout: 120_000,
+				env: {
+					ASTRO_DEV_BACKGROUND: "false",
+				},
+			},
 });

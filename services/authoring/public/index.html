@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head><meta charset="utf-8"><meta name="editor-nonce" content="__EDITOR_NONCE__"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Shirone Workspace</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/app.css"><script type="module" src="/app.js"></script></head>
+<body>
+<header><a class="brand" href="/">Shirone <span id="space-name"></span></a><nav><a href="__BLOG_URL__" target="_blank" rel="noreferrer">Blog ↗</a><select id="locale" aria-label="Language"><option value="zh_CN">简体中文</option><option value="en">English</option><option value="ja">日本語</option><option value="zh_TW">繁體中文</option><option value="ko">한국어</option><option value="es">Español</option><option value="id">Indonesia</option><option value="th">ไทย</option><option value="tr">Türkçe</option><option value="vi">Tiếng Việt</option></select><button id="theme-toggle" type="button" data-copy="DarkMode"></button><button id="logout" hidden data-copy="SignOut"></button></nav></header>
+<main>
+<section id="login" hidden><h1 data-copy="SignIn"></h1><p data-copy="LoginNotice"></p><a class="primary button" href="/auth/login" data-copy="SignIn"></a></section>
+<section id="workspace" hidden>
+<section id="library">
+<div class="intro"><div><h1 id="heading"></h1><p id="notice"></p></div><button class="primary" id="new" data-copy="New"></button></div>
+<div class="toolbar"><label><span class="sr-only" data-copy="Search"></span><input id="search" type="search" data-placeholder="Search"></label><label><span class="sr-only" data-copy="Trash"></span><select id="filter"><option value="active" data-copy="All"></option><option value="trash" data-copy="Trash"></option></select></label><a id="other-space" href="__VAULT_URL__" data-copy="Vault"></a></div>
+<div class="filters" id="filters"><button data-filter="all" data-copy="All" aria-pressed="true"></button><button data-filter="posts" data-copy="Posts" aria-pressed="false"></button><button data-filter="moments" data-copy="Moments" aria-pressed="false"></button><button data-filter="draft" data-copy="Draft" aria-pressed="false"></button><button data-filter="published" data-copy="Published" aria-pressed="false"></button><span id="result-count" class="hint"></span></div>
+<div class="library-panel"><div id="list"></div><p id="empty" data-copy="Empty" hidden></p></div>
+<details id="jobs-section"><summary data-copy="Jobs"></summary><ol id="jobs"></ol></details>
+</section>
+<section class="editor" id="editor" hidden>
+<form id="form">
+<div class="editor-top"><button type="button" id="back" data-copy="Back"></button><span id="save-state" role="status"></span><div class="actions"><button type="button" id="properties" data-copy="Properties" aria-expanded="false" aria-controls="inspector"></button><button type="button" id="preview" data-copy="Preview"></button><button type="submit" id="save" data-copy="Save"></button><button type="button" class="primary" id="publish" data-copy="Publish"></button></div></div>
+<p id="protected-notice" class="hint" data-copy="ProtectedNotice" hidden></p>
+<div class="editor-layout">
+<div class="document-surface">
+<label class="title-label"><span class="sr-only" data-copy="Title"></span><input id="title" name="title" maxlength="160" required data-placeholder="Title"></label>
+<div class="document-cover" id="cover-area" hidden><img id="cover-preview" alt="" referrerpolicy="no-referrer" hidden><button type="button" id="change-cover" data-copy="ChangeCover"></button></div>
+<div class="writing-tools" id="writing-tools">
+<button type="button" id="undo" data-copy="Undo"></button><button type="button" id="redo" data-copy="Redo"></button><span class="tool-divider"></span>
+<button type="button" data-insert="heading" data-copy="HeadingTool"></button><button type="button" data-insert="bold" data-copy="BoldTool"></button><button type="button" data-insert="list" data-copy="ListTool"></button><button type="button" data-insert="quote" data-copy="QuoteTool"></button><button type="button" data-insert="link" data-copy="LinkTool"></button><button type="button" data-insert="code" data-copy="CodeTool"></button>
+<button type="button" id="insert-image" data-copy="Image"></button><button type="button" id="syntax-toggle" data-copy="Syntax" aria-expanded="false" aria-controls="syntax-tools"></button><button type="button" id="source-toggle" data-copy="SourceMode" aria-pressed="false"></button>
+<input type="file" id="editor-upload" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" multiple hidden>
+</div>
+<div class="syntax-tools" id="syntax-tools" hidden><label><span data-copy="Syntax"></span><select id="syntax"></select></label><button type="button" id="insert-syntax" data-copy="InsertSyntax"></button></div>
+
+<div class="writing-area" id="writing-area"><div id="live-editor"></div><label id="source-fallback"><span class="sr-only" data-copy="Body"></span><textarea id="body" rows="20" maxlength="100000"></textarea></label></div>
+<p class="hint editor-help" id="editor-help" data-copy="LiveHelp"></p>
+<div class="editor-bottom"><button type="button" id="trash" data-copy="Trash"></button><button type="button" id="restore" data-copy="Restore" hidden></button><button type="button" id="withdraw" data-copy="Withdraw"></button></div>
+</div>
+<aside id="inspector" hidden><div class="inspector-heading"><strong data-copy="Properties"></strong><button type="button" id="close-properties" data-copy="Close"></button></div>
+<div class="settings-grid">
+<details class="metadata" open><summary data-copy="Metadata"></summary>
+<div class="fields"><label><span data-copy="Date"></span><input id="date" name="date" type="date" required></label><label id="kind-label"><span data-copy="Kind"></span><select id="kind"><option value="posts" data-copy="Posts"></option><option value="moments" data-copy="Moments"></option><option value="diary" data-copy="Diary"></option></select></label></div>
+<div class="fields"><label><span data-copy="Tags"></span><input id="tags" maxlength="480"></label><label id="category-label"><span data-copy="Category"></span><input id="category" maxlength="60"></label></div>
+<label id="description-label"><span data-copy="Description"></span><input id="description" maxlength="500"></label>
+<div data-metadata-group><div id="metadata-main" class="fields"></div></div>
+</details>
+<details class="metadata" data-metadata-group><summary data-copy="DisplayOptions"></summary><div id="metadata-display" class="fields"></div></details>
+<details class="metadata" data-metadata-group><summary data-copy="LinkOptions"></summary><div id="metadata-links" class="fields"></div></details>
+<details class="metadata" id="media-panel"><summary data-copy="Media"></summary><p class="hint" data-copy="MediaHelp"></p><div class="media-actions"><label class="button"><span data-copy="Upload"></span><input id="upload" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif"></label></div><div id="media-list" class="media-grid"></div></details>
+</div>
+
+<p id="source-path" class="hint" hidden></p>
+</aside>
+</div>
+</form></section>
+<dialog id="preview-dialog"><div class="preview-heading"><strong data-copy="Preview"></strong><button type="button" id="close-preview" data-copy="Close"></button></div><p class="hint" data-copy="PreviewNotice"></p><iframe id="preview-frame" title="Preview" sandbox="allow-same-origin" referrerpolicy="no-referrer" hidden></iframe></dialog>
+<footer><span data-copy="SessionNotice"></span><button id="logout-all" data-copy="LogoutAll"></button></footer>
+</section>
+<p id="status" role="status" aria-live="polite"></p>
+</main></body></html>

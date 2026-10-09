@@ -1,6 +1,8 @@
 import { permalinkConfig } from "../config/permalinkConfig.ts";
+import { siteConfig } from "../config/siteConfig.ts";
 import type I18nKey from "../i18n/i18nKey.ts";
-import { i18n } from "../i18n/translation.ts";
+import { localePath } from "../i18n/locale.ts";
+import { getLocale, i18n } from "../i18n/translation.ts";
 import {
 	generatePermalinkSlug,
 	type PostLikeForPermalink,
@@ -60,7 +62,7 @@ export function getPostUrl(
 		  },
 ): string {
 	if ("url" in post && typeof post.url === "string" && post.url.length > 0) {
-		return post.url;
+		return url(post.url);
 	}
 
 	if (post.data?.permalink && post.data.permalink.trim().length > 0) {
@@ -131,6 +133,21 @@ export function url(path: string, baseUrlOverride?: string): string {
 	const baseUrl = baseUrlOverride ?? import.meta.env?.BASE_URL ?? "/";
 	const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
 	const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+	// Only page URLs receive locale prefixes. Static assets and feed endpoints
+	// remain shared; an explicit base override keeps the pure URL helper contract.
+	if (
+		siteConfig.languageSwitcher &&
+		baseUrlOverride === undefined &&
+		!normalizedPath
+			.split(/[?#]/)[0]
+			.split("/")
+			.some((part) => part.includes(".")) &&
+		!/^\/(?:_astro|_image|pagefind|assets|images|fonts|logo)(?:\/|$)/.test(
+			normalizedPath,
+		)
+	) {
+		return localePath(normalizedPath, getLocale(), siteConfig.lang, baseUrl);
+	}
 
 	if (
 		normalizedBase !== "/" &&

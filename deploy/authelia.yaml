@@ -1,0 +1,57 @@
+theme: auto
+server:
+  address: tcp://0.0.0.0:9091/
+log:
+  level: warn
+totp:
+  disable: false
+  issuer: demo-owner Blog
+  algorithm: SHA1
+  digits: 6
+  period: 30
+  skew: 1
+webauthn:
+  disable: true
+authentication_backend:
+  password_reset:
+    disable: true
+  password_change:
+    disable: true
+  file:
+    path: /config/users.yml
+    watch: true
+    password:
+      algorithm: argon2
+      argon2:
+        variant: argon2id
+        iterations: 3
+        memory: 65536
+        parallelism: 4
+access_control:
+  default_policy: deny
+  rules:
+    - domain: auth.example.com
+      subject: user:demo-owner
+      policy: two_factor
+session:
+  name: __Secure-blog_identity
+  same_site: lax
+  inactivity: 30m
+  expiration: 8h
+  remember_me: -1
+  cookies:
+    - domain: auth.example.com
+      authelia_url: https://auth.example.com
+  redis:
+    host: sessions
+    port: 6379
+regulation:
+  max_retries: 5
+  find_time: 2m
+  ban_time: 10m
+storage:
+  local:
+    path: /data/db.sqlite3
+notifier:
+  filesystem:
+    filename: /data/notifications.txt

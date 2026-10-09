@@ -1,0 +1,10 @@
+FROM node@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20
+WORKDIR /app
+RUN npm install -g pnpm@9.14.4
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+COPY *.mjs ./
+COPY public ./public
+COPY generated ./generated
+USER 1002:1003
+CMD ["node", "server.mjs"]

@@ -1,8 +1,7 @@
 ---
 import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+import { getLocale, i18n } from "@i18n/translation";
 import { getCalendarData } from "@utils/calendar-data";
-import { siteConfig } from "@/config/siteConfig";
 import type { CalendarWidget } from "@/types/sidebarConfig";
 /**
  * 月度文章历侧栏 widget（数据驱动）。
@@ -24,8 +23,8 @@ const style = Astro.props.style;
 
 const startOfWeek = Astro.props.widget?.startOfWeek ?? "mon";
 
-// siteConfig.lang 形如 zh_CN / en：替换为 BCP47 供 Intl 使用
-const locale = siteConfig.lang.replace("_", "-");
+// 与当前界面语言一致，Intl 接受 BCP47 语言标识。
+const locale = getLocale();
 
 const { postsByDate, activeMonths } = await getCalendarData();
 ---

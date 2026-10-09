@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily encrypted blog workspace backup
+[Timer]
+OnCalendar=*-*-* 04:45:00
+Persistent=true
+RandomizedDelaySec=300
+[Install]
+WantedBy=timers.target

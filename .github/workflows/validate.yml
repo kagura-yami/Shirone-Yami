@@ -1,0 +1,26 @@
+name: Validate template
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.14.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            services/authoring/pnpm-lock.yaml
+      - run: pnpm bootstrap
+      - run: pnpm test:backend
+      - run: pnpm exec astro check
+      - run: pnpm check:manifest
+      - run: pnpm build
+      - run: node scripts/release/check.mjs

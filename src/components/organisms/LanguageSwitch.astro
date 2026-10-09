@@ -1,0 +1,89 @@
+---
+import I18nKey from "@i18n/i18nKey";
+import { localePath, locales } from "@i18n/locale";
+import { getLocale, i18n } from "@i18n/translation";
+import { Icon } from "astro-icon/components";
+import { siteConfig } from "@/config/siteConfig";
+
+const current = getLocale();
+---
+
+<details class="language-switch relative shrink-0" data-language-switch>
+	<summary class="m3-state-layer relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-[var(--on-surface)]" aria-label={i18n(I18nKey.language)} title={i18n(I18nKey.language)}>
+		<Icon name="material-symbols:translate-rounded" class="text-[1.25rem]" />
+	</summary>
+	<nav class="float-panel absolute right-0 top-12 w-48 max-h-[70vh] overflow-y-auto p-2" aria-label={i18n(I18nKey.language)}>
+		{locales.map(({ code, name }) => (
+			<a class="language-switch__option m3-state-layer relative flex items-center justify-between gap-2 px-3 py-2" href={localePath(Astro.url.pathname, code, siteConfig.lang, siteConfig.base)} lang={code} hreflang={code} aria-current={code === current ? "true" : undefined} data-language={code} data-no-swup>
+				{name}
+				{code === current && <Icon name="material-symbols:check-rounded" aria-hidden="true" />}
+			</a>
+		))}
+	</nav>
+</details>
+
+<style is:inline>
+	.language-switch > summary { list-style: none; }
+	.language-switch > summary::-webkit-details-marker { display: none; }
+	.language-switch > nav { background: var(--surface-container); color: var(--on-surface); border-radius: var(--shape-corner-l); box-shadow: var(--m3e-elevation-2); }
+	.language-switch__option { min-height: 2.75rem; border-radius: var(--shape-corner-m); font: var(--m3e-type-label-large); }
+	.language-switch__option[aria-current] { color: var(--primary); background: var(--secondary-container); }
+</style>
+
+<script>
+	import { siteConfig } from "@/config/siteConfig";
+	import { locales, localePath, normalizeLocale, splitLocalePath } from "@i18n/locale";
+
+	const storageKey = "shirone:language";
+	const selector = document.querySelector<HTMLDetailsElement>("[data-language-switch]");
+	if (selector) {
+		// A full navigation on language changes also refreshes persistent Svelte
+		// islands. Ordinary navigation inside one locale continues to use Swup.
+		const refreshLinks = () => {
+			for (const link of selector.querySelectorAll<HTMLAnchorElement>("[data-language]")) {
+				link.href = localePath(location.pathname + location.search + location.hash, link.dataset.language ?? "en", siteConfig.lang, siteConfig.base);
+			}
+		};
+		const sync = () => { selector.open = false; refreshLinks(); };
+		let prefetched = '';
+		const prefetch = (event: Event) => {
+			const link = (event.target as Element).closest<HTMLAnchorElement>('[data-language]');
+			if (!link || prefetched === link.href || link.getAttribute('aria-current')) return;
+			prefetched = link.href;
+			const hint = document.createElement('link');
+			hint.rel = 'prefetch';
+			hint.as = 'document';
+			hint.href = link.href;
+			document.head.append(hint);
+		};
+		selector.addEventListener('pointerover', prefetch);
+		selector.addEventListener('focusin', prefetch);
+		refreshLinks();
+		selector.addEventListener("toggle", () => { if (selector.open) refreshLinks(); });
+		try {
+			const explicit = splitLocalePath(location.pathname, siteConfig.base).locale;
+			const saved = localStorage.getItem(storageKey);
+			if (!explicit && saved && locales.some(({ code }) => code === saved) && saved !== normalizeLocale(siteConfig.lang)) {
+				location.replace(localePath(location.pathname + location.search + location.hash, saved, siteConfig.lang, siteConfig.base));
+			}
+		} catch { /* Storage is optional; ordinary language links still work. */ }
+		selector.addEventListener("click", (event) => {
+			const link = (event.target as Element).closest<HTMLAnchorElement>("[data-language]");
+			if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+			selector.open = false;
+			const destination = new URL(link.href);
+			try { sessionStorage.setItem('shirone:language-navigation', destination.pathname + destination.search); } catch { /* Optional transition enhancement. */ }
+			try { localStorage.setItem(storageKey, link.dataset.language ?? "en"); } catch { /* Optional preference. */ }
+		});
+		document.addEventListener("click", (event) => {
+			if (!selector.contains(event.target as Node)) selector.open = false;
+		});
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && selector.open) {
+				selector.open = false;
+				selector.querySelector("summary")?.focus();
+			}
+		});
+		document.addEventListener("swup:content:replace", sync);
+	}
+</script>

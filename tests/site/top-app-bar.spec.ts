@@ -7,6 +7,7 @@ import { devicesConfig } from "../../src/config/devicesConfig";
 import { friendsConfig } from "../../src/config/friendsConfig";
 import { momentsConfig } from "../../src/config/momentsConfig";
 import { projectsConfig } from "../../src/config/projectsConfig";
+import { siteConfig } from "../../src/config/siteConfig";
 import { skillsConfig } from "../../src/config/skillsConfig";
 import { timelineConfig } from "../../src/config/timelineConfig";
 
@@ -37,7 +38,7 @@ test.describe("top app bar content alignment", () => {
 		const title = content.locator(":scope > a");
 		const nav = content.locator(":scope > nav");
 
-		await expect(title).toHaveText("Shirone");
+		await expect(title).toHaveText(siteConfig.title);
 		await expect(title).not.toHaveClass(/lg:absolute/);
 		await expect(nav).toBeVisible();
 		await expect(nav).toHaveClass(/lg:absolute/);

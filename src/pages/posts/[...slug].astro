@@ -316,11 +316,11 @@ const jsonLd = {
                     scope={scope}
                     hint={entry.data.passwordHint}
                 >
-                    <Content />
+                    <div lang={(entry.data.lang || siteConfig.lang).replace("_", "-")}><Content /></div>
                 </EncryptedContent>
             ) : (
                 <Markdown class="mb-6 onload-animation">
-                    <Content />
+                    <div lang={(entry.data.lang || siteConfig.lang).replace("_", "-")}><Content /></div>
                 </Markdown>
             )}
 

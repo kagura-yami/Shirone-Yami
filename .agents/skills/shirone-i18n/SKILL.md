@@ -5,7 +5,7 @@ description: Adding or changing user-facing UI copy in the Shirone theme - I18nK
 
 # Shirone 国际化(i18n)
 
-Shirone 禁止硬编码用户可见组件文案:所有 UI 字符串走 `src/i18n/i18nKey.ts` 的 `I18nKey` 枚举注册,由消费方用 `i18n()` 按 `siteConfig` 的语言渲染。
+Shirone 禁止硬编码用户可见组件文案:所有 UI 字符串走 `src/i18n/i18nKey.ts` 的 `I18nKey` 枚举注册,由消费方用 `i18n()` 按当前界面语言渲染。默认语言来自 `siteConfig.lang`；访客语言路由与切换契约见 `src/config/README.md` 的「访客界面语言」。不要修改全局配置来切换请求语言。
 
 ## 核心红线
 
@@ -18,7 +18,7 @@ Shirone 禁止硬编码用户可见组件文案:所有 UI 字符串走 `src/i18n
 ## 操作要点
 
 - 查现有 key:先在 `src/i18n/i18nKey.ts` 搜索语义相近的 key 复用,避免同义新 key 膨胀。
-- 文章级语言用 frontmatter `lang` 覆盖站点默认语言,无需动 locale 模块。
+- 文章 frontmatter `lang` 标记正文语言；启用访客语言切换时，界面语言由路由决定。检查默认路由、非默认语言、Swup 导航与浏览器偏好恢复，不要自动翻译作者内容。
 
 ## 必读文档
 

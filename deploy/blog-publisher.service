@@ -1,0 +1,24 @@
+[Unit]
+Description=Blog content publishing worker
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=demo-owner
+Group=demo-owner
+Environment=DOCKER_CONFIG=/srv/blog/docker-cli
+ExecStart=/usr/bin/python3 /srv/blog/project/deploy/publish-worker.py
+Restart=on-failure
+RestartSec=10
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/blog
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

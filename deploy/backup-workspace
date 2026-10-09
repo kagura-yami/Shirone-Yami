@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+for mode in admin vault; do
+  docker run --rm --network none --user 1002:1003 --cap-drop ALL --security-opt no-new-privileges:true \
+    --read-only --memory 256m --pids-limit 64 --tmpfs /tmp:uid=1002,gid=1003,mode=0700,size=128m \
+    -v "/srv/blog/data/$mode:/data:ro" -v "/srv/blog/backups/$mode:/backup" \
+    -v /etc/blog/backup-key:/run/secrets/backup-key:ro blog-authoring:1 node backup.mjs create
+done

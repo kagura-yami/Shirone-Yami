@@ -1,0 +1,10 @@
+import { build } from 'esbuild';
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+const locales=['en','es','id','ja','ko','th','tr','vi','zh_CN','zh_TW'];
+const directory=fileURLToPath(new URL('../../src/i18n/languages/',import.meta.url));
+const result=await build({stdin:{contents:locales.map(l=>`import { ${l} } from './${l}.ts';`).join('\n')+`export default {${locales.join(',')}};`,resolveDir:directory,loader:'ts'},bundle:true,write:false,format:'esm',platform:'node'});
+const {default:all}=await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
+const copy=Object.fromEntries(Object.entries(all).map(([l,d])=>[l,Object.fromEntries(Object.entries(d).filter(([k])=>k.startsWith('workspace')).map(([k,v])=>[k.slice(9),v]))]));
+mkdirSync(new URL('./public/',import.meta.url),{recursive:true});
+writeFileSync(new URL('./public/copy.json',import.meta.url),JSON.stringify(copy));

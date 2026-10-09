@@ -1,0 +1,72 @@
+name: blog-auth
+services:
+  identity:
+    image: blog-identity:authelia-4.39.28
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: Dockerfile.identity
+    restart: unless-stopped
+    user: "1002:1003"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    pids_limit: 100
+    command: ["--config", "/config/configuration.yml,/config/oidc.yml"]
+    environment:
+      TZ: Asia/Shanghai
+      AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /run/secrets/storage-key
+      AUTHELIA_SESSION_SECRET_FILE: /run/secrets/session-key
+    ports:
+      - "127.0.0.1:18433:9091"
+    volumes:
+      - ./authelia.yaml:/config/configuration.yml:ro
+      - /etc/blog/authelia/oidc.yml:/config/oidc.yml:ro
+      - /etc/blog/authelia/users.yml:/config/users.yml:ro
+      - /etc/blog/authelia/storage-key:/run/secrets/storage-key:ro
+      - /etc/blog/authelia/session-key:/run/secrets/session-key:ro
+      - /srv/blog/data/authelia:/data
+    tmpfs:
+      - /tmp:uid=1002,gid=1003,mode=0700,size=16m
+    depends_on:
+      sessions:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1:9091/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks: [identity_edge, sessions]
+  sessions:
+    image: redis@sha256:7aec734b2bb298a1d769fd8729f13b8514a41bf90fcdd1f38ec52267fbaa8ee6
+    command: [redis-server, --save, "", --appendonly, "no", --maxmemory, 32mb, --maxmemory-policy, noeviction]
+    restart: unless-stopped
+    user: "1002:1003"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 64m
+    pids_limit: 50
+    tmpfs:
+      - /data:uid=1002,gid=1003,mode=0700,size=8m
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+    networks: [sessions]
+networks:
+  identity_edge:
+    driver: bridge
+  sessions:
+    internal: true

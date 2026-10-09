@@ -33,97 +33,129 @@ import { pruneUnavailableNavLinks } from "../utils/nav-utils.ts";
  */
 export const LinkPresets: Record<string, NavBarLink> = {
 	Home: {
-		name: i18n(I18nKey.home),
+		get name() {
+			return i18n(I18nKey.home);
+		},
 		url: "/",
 		icon: "material-symbols:home-outline-rounded",
 		pageKey: "home",
 	},
 	Archive: {
-		name: i18n(I18nKey.archive),
+		get name() {
+			return i18n(I18nKey.archive);
+		},
 		url: "/archive/",
 		icon: "material-symbols:archive-outline-rounded",
 		pageKey: "archive",
 	},
 	Friends: {
-		name: i18n(I18nKey.friends),
+		get name() {
+			return i18n(I18nKey.friends);
+		},
 		url: "/friends/",
 		icon: "material-symbols:handshake-outline-rounded",
 		pageKey: "friends",
 	},
 	Moments: {
-		name: i18n(I18nKey.moments),
+		get name() {
+			return i18n(I18nKey.moments);
+		},
 		url: "/moments/",
 		icon: "material-symbols:auto-awesome-outline-rounded",
 		pageKey: "moments",
 	},
 	Anime: {
-		name: i18n(I18nKey.anime),
+		get name() {
+			return i18n(I18nKey.anime);
+		},
 		url: "/anime/",
 		icon: "material-symbols:live-tv-outline-rounded",
 		pageKey: "anime",
 	},
 	Compass: {
-		name: i18n(I18nKey.compass),
+		get name() {
+			return i18n(I18nKey.compass);
+		},
 		url: "/compass/",
 		icon: "material-symbols:explore-rounded",
 		pageKey: "compass",
 	},
 	Skills: {
-		name: i18n(I18nKey.skills),
+		get name() {
+			return i18n(I18nKey.skills);
+		},
 		url: "/skills/",
 		icon: "material-symbols:workspaces-outline-rounded",
 		pageKey: "skills",
 	},
 	Projects: {
-		name: i18n(I18nKey.projects),
+		get name() {
+			return i18n(I18nKey.projects);
+		},
 		url: "/projects/",
 		icon: "material-symbols:deployed-code-outline-rounded",
 		pageKey: "projects",
 	},
 	Devices: {
-		name: i18n(I18nKey.devices),
+		get name() {
+			return i18n(I18nKey.devices);
+		},
 		url: "/devices/",
 		icon: "material-symbols:devices-rounded",
 		pageKey: "devices",
 	},
 	Games: {
-		name: i18n(I18nKey.games),
+		get name() {
+			return i18n(I18nKey.games);
+		},
 		url: "/games/",
 		icon: "material-symbols:sports-esports-outline-rounded",
 		pageKey: "games",
 	},
 	Timeline: {
-		name: i18n(I18nKey.timeline),
+		get name() {
+			return i18n(I18nKey.timeline);
+		},
 		url: "/timeline/",
 		icon: "material-symbols:timeline-rounded",
 		pageKey: "timeline",
 	},
 	Albums: {
-		name: i18n(I18nKey.albums),
+		get name() {
+			return i18n(I18nKey.albums);
+		},
 		url: "/albums/",
 		icon: "material-symbols:photo-library-outline-rounded",
 		pageKey: "albums",
 	},
 	Categories: {
-		name: i18n(I18nKey.categories),
+		get name() {
+			return i18n(I18nKey.categories);
+		},
 		url: "/categories/",
 		icon: "material-symbols:folder-outline-rounded",
 		pageKey: "categories",
 	},
 	Tags: {
-		name: i18n(I18nKey.tags),
+		get name() {
+			return i18n(I18nKey.tags);
+		},
 		url: "/tags/",
 		icon: "material-symbols:tag-rounded",
 		pageKey: "tags",
 	},
 	Series: {
-		name: i18n(I18nKey.series),
+		get name() {
+			return i18n(I18nKey.series);
+		},
 		url: "/series/",
 		icon: "material-symbols:auto-stories-outline-rounded",
 		pageKey: "series",
 	},
 	About: {
-		name: i18n(I18nKey.about),
+		get name() {
+			return i18n(I18nKey.about);
+		},
 		url: "/about/",
 		icon: "material-symbols:info-outline-rounded",
 		pageKey: "about",
@@ -147,7 +179,9 @@ const defaultNavBarConfig: NavBarConfig = {
 		LinkPresets.Compass,
 		LinkPresets.Albums,
 		{
-			name: i18n(I18nKey.more),
+			get name() {
+				return i18n(I18nKey.more);
+			},
 			icon: "material-symbols:apps-rounded",
 			children: [
 				LinkPresets.Timeline,
@@ -249,10 +283,12 @@ const userNavBar = getUserConfig("navBar") as NavBarConfigOverride | undefined;
  * 不会留下点进去 404 的死链。
  */
 export const navBarConfig: NavBarConfig = {
-	links: pruneUnavailableNavLinks(
-		resolveNavBarLinks(
-			userNavBar ? userNavBar.links : defaultNavBarConfig.links,
-		),
-		unavailableFeatureRoutes,
-	),
+	get links() {
+		return pruneUnavailableNavLinks(
+			resolveNavBarLinks(
+				userNavBar ? userNavBar.links : defaultNavBarConfig.links,
+			),
+			unavailableFeatureRoutes,
+		);
+	},
 };
